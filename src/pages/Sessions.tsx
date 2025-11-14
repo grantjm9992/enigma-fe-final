@@ -20,6 +20,7 @@ export default function Sessions() {
     name: '',
     description: '',
     date: '',
+    duration: 60,
     instructorId: '',
     participantIds: [],
     routines: [],
@@ -97,6 +98,7 @@ export default function Sessions() {
       name: '',
       description: '',
       date: '',
+      duration: 60,
       instructorId: trainers[0]?._id || '',
       participantIds: [],
       routines: [],
@@ -124,6 +126,7 @@ export default function Sessions() {
       name: session.name,
       description: session.description || '',
       date: convertToDatetimeLocal(session.date),
+      duration: session.duration || 60,
       instructorId: session.instructorId,
       participantIds: session.participantIds || [],
       routines: session.routines || [],
@@ -419,8 +422,8 @@ export default function Sessions() {
                   />
                 </div>
 
-                {/* Date and Status */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Date, Duration and Status */}
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
                       Scheduled Date & Time
@@ -432,6 +435,23 @@ export default function Sessions() {
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       className="block w-full rounded-lg bg-slate-700 border border-slate-600 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Duration</label>
+                    <select
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+                      className="block w-full rounded-lg bg-slate-700 border border-slate-600 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    >
+                      <option value={15}>15 minutes</option>
+                      <option value={30}>30 minutes</option>
+                      <option value={45}>45 minutes</option>
+                      <option value={60}>1 hour</option>
+                      <option value={75}>1 hour 15 minutes</option>
+                      <option value={90}>1 hour 30 minutes</option>
+                      <option value={105}>1 hour 45 minutes</option>
+                      <option value={120}>2 hours</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Status</label>
