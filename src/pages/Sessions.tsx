@@ -115,7 +115,7 @@ export default function Sessions() {
       date: session.date,
       instructorId: session.instructorId,
       participantIds: session.participantIds || [],
-      routines: session.routines?.map((r) => r._id) || [],
+      routines: session.routines || [],
       location: session.location || '',
       maxParticipants: session.maxParticipants || 0,
       status: session.status || 'scheduled',
@@ -129,11 +129,13 @@ export default function Sessions() {
     setSearchTerm('');
   };
 
-  const addRoutine = (routineId: string) => {
-    if (!formData.routines?.includes(routineId)) {
+  const addRoutine = (routine: Routine) => {
+    // Check if routine is already added by _id
+    const isAlreadyAdded = formData.routines?.some((r) => r._id === routine._id);
+    if (!isAlreadyAdded) {
       setFormData({
         ...formData,
-        routines: [...(formData.routines || []), routineId],
+        routines: [...(formData.routines || []), routine],
       });
     }
     setIsRoutinePickerOpen(false);
@@ -175,10 +177,6 @@ export default function Sessions() {
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
-
-  const getRoutineById = (id: string) => {
-    return routines.find((r) => r._id === id);
   };
 
   const filteredRoutines = routines.filter(
@@ -505,64 +503,59 @@ export default function Sessions() {
 
                   {formData.routines && formData.routines.length > 0 ? (
                     <div className="space-y-2">
-                      {formData.routines.map((routineId, index) => {
-                        const routine = getRoutineById(routineId);
-                        if (!routine) return null;
-
-                        return (
-                          <div
-                            key={index}
-                            draggable
-                            onDragStart={() => handleDragStart(index)}
-                            onDragOver={(e) => handleDragOver(e, index)}
-                            onDragEnd={handleDragEnd}
-                            className={`flex items-center bg-slate-700 border border-slate-600 rounded-lg p-3 hover:border-slate-500 transition-all cursor-move ${
-                              draggedIndex === index ? 'opacity-50' : ''
-                            }`}
-                          >
-                            <div className="text-slate-400 mr-3 cursor-grab active:cursor-grabbing">
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M4 8h16M4 16h16"
-                                />
-                              </svg>
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-white font-medium">{routine.name}</p>
-                              <p className="text-xs text-slate-400">
-                                {routine.exercises?.length || 0} exercises
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removeRoutine(index)}
-                              className="ml-3 text-red-400 hover:text-red-300 transition-colors"
+                      {formData.routines.map((routine, index) => (
+                        <div
+                          key={routine._id}
+                          draggable
+                          onDragStart={() => handleDragStart(index)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDragEnd={handleDragEnd}
+                          className={`flex items-center bg-slate-700 border border-slate-600 rounded-lg p-3 hover:border-slate-500 transition-all cursor-move ${
+                            draggedIndex === index ? 'opacity-50' : ''
+                          }`}
+                        >
+                          <div className="text-slate-400 mr-3 cursor-grab active:cursor-grabbing">
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                            </button>
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 8h16M4 16h16"
+                              />
+                            </svg>
                           </div>
-                        );
-                      })}
+                          <div className="flex-1">
+                            <p className="text-white font-medium">{routine.name}</p>
+                            <p className="text-xs text-slate-400">
+                              {routine.exercises?.length || 0} exercises
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeRoutine(index)}
+                            className="ml-3 text-red-400 hover:text-red-300 transition-colors"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="text-center py-8 bg-slate-700/50 rounded-lg border-2 border-dashed border-slate-600">
@@ -641,12 +634,12 @@ export default function Sessions() {
                 </div>
               ) : (
                 filteredRoutines.map((routine) => {
-                  const isAdded = formData.routines?.includes(routine._id);
+                  const isAdded = formData.routines?.some((r) => r._id === routine._id);
                   return (
                     <button
                       key={routine._id}
                       type="button"
-                      onClick={() => addRoutine(routine._id)}
+                      onClick={() => addRoutine(routine)}
                       disabled={isAdded}
                       className={`w-full text-left p-4 rounded-lg border transition-all ${
                         isAdded
