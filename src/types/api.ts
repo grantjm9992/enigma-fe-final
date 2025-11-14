@@ -161,9 +161,9 @@ export interface Session {
   _id: string;
   name: string;
   description?: string;
-  scheduledDate: string;
-  instructor: string;
-  participants: string[];
+  date: string;
+  instructorId: string;
+  participantIds: string[];
   routines: Routine[];
   location?: string;
   maxParticipants?: number;
@@ -175,9 +175,9 @@ export interface Session {
 export interface CreateSessionDto {
   name: string;
   description?: string;
-  scheduledDate: string;
-  instructor: string;
-  participants?: string[];
+  date: string;
+  instructorId: string;
+  participantIds?: string[];
   routines: string[];
   location?: string;
   maxParticipants?: number;
@@ -187,9 +187,9 @@ export interface CreateSessionDto {
 export interface UpdateSessionDto {
   name?: string;
   description?: string;
-  scheduledDate?: string;
-  instructor?: string;
-  participants?: string[];
+  date?: string;
+  instructorId?: string;
+  participantIds?: string[];
   routines?: string[];
   location?: string;
   maxParticipants?: number;

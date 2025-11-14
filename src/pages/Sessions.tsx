@@ -19,9 +19,9 @@ export default function Sessions() {
   const [formData, setFormData] = useState<CreateSessionDto>({
     name: '',
     description: '',
-    scheduledDate: '',
-    instructor: '',
-    participants: [],
+    date: '',
+    instructorId: '',
+    participantIds: [],
     routines: [],
     location: '',
     maxParticipants: 0,
@@ -96,9 +96,9 @@ export default function Sessions() {
     setFormData({
       name: '',
       description: '',
-      scheduledDate: '',
-      instructor: trainers[0]?.email || '',
-      participants: [],
+      date: '',
+      instructorId: trainers[0]?._id || '',
+      participantIds: [],
       routines: [],
       location: '',
       maxParticipants: 0,
@@ -112,9 +112,9 @@ export default function Sessions() {
     setFormData({
       name: session.name,
       description: session.description || '',
-      scheduledDate: session.scheduledDate,
-      instructor: session.instructor,
-      participants: session.participants || [],
+      date: session.date,
+      instructorId: session.instructorId,
+      participantIds: session.participantIds || [],
       routines: session.routines?.map((r) => r._id) || [],
       location: session.location || '',
       maxParticipants: session.maxParticipants || 0,
@@ -268,7 +268,7 @@ export default function Sessions() {
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {sessions.map((session) => {
-            const trainer = trainers.find((t) => t.email === session.instructor);
+            const trainer = trainers.find((t) => t._id === session.instructorId);
             const statusColors = {
               scheduled: 'bg-blue-900/50 text-blue-300 border-blue-700',
               in_progress: 'bg-yellow-900/50 text-yellow-300 border-yellow-700',
@@ -303,13 +303,13 @@ export default function Sessions() {
                     <div className="flex items-center text-slate-300">
                       <span className="text-lg mr-2">📅</span>
                       <span className="font-medium mr-2">Date:</span>
-                      <span className="text-slate-400">{formatDate(session.scheduledDate)}</span>
+                      <span className="text-slate-400">{formatDate(session.date)}</span>
                     </div>
                     <div className="flex items-center text-slate-300">
                       <span className="text-lg mr-2">👤</span>
                       <span className="font-medium mr-2">Instructor:</span>
                       <span className="text-slate-400">
-                        {trainer ? `${trainer.name} ${trainer.surname}` : session.instructor}
+                        {trainer ? `${trainer.name} ${trainer.surname}` : 'Unknown'}
                       </span>
                     </div>
                     {session.location && (
@@ -323,7 +323,7 @@ export default function Sessions() {
                       <span className="text-lg mr-2">👥</span>
                       <span className="font-medium mr-2">Participants:</span>
                       <span className="text-slate-400">
-                        {session.participants?.length || 0}
+                        {session.participantIds?.length || 0}
                         {session.maxParticipants ? ` / ${session.maxParticipants}` : ''}
                       </span>
                     </div>
@@ -419,8 +419,8 @@ export default function Sessions() {
                     <input
                       type="datetime-local"
                       required
-                      value={formData.scheduledDate}
-                      onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       className="block w-full rounded-lg bg-slate-700 border border-slate-600 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
@@ -447,13 +447,13 @@ export default function Sessions() {
                     </label>
                     <select
                       required
-                      value={formData.instructor}
-                      onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
+                      value={formData.instructorId}
+                      onChange={(e) => setFormData({ ...formData, instructorId: e.target.value })}
                       className="block w-full rounded-lg bg-slate-700 border border-slate-600 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     >
                       <option value="">Select instructor</option>
                       {trainers.map((trainer) => (
-                        <option key={trainer._id} value={trainer.email}>
+                        <option key={trainer._id} value={trainer._id}>
                           {trainer.name} {trainer.surname}
                         </option>
                       ))}
