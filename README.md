@@ -135,6 +135,44 @@ The built files will be in the `dist` directory.
 npm run preview
 ```
 
+## Deployment to Railway
+
+### Quick Deploy
+
+1. **Sign in to Railway**
+   - Go to [railway.app](https://railway.app)
+   - Sign in with your GitHub account
+
+2. **Create New Project**
+   - Click "New Project"
+   - Select "Deploy from GitHub repo"
+   - Choose the `enigma-fe-final` repository
+   - Select the branch: `claude/boxing-gym-management-app-01MJqF7mdkBWyzZyj3CGATLm`
+
+3. **Railway Auto-Configuration**
+   - Railway will automatically detect the settings from `railway.json`
+   - Build command: `npm install && npm run build`
+   - Start command: `npm start`
+
+4. **Deploy**
+   - Click "Deploy"
+   - Railway will build and deploy your application
+   - You'll get a public URL once deployment is complete
+
+### Configuration Files
+
+The project includes Railway-specific configuration:
+- `railway.json` - Railway deployment configuration
+- `serve.json` - Static file server configuration with SPA routing
+- `package.json` - Includes `start` script for production server
+
+### Environment Variables
+
+If you need to configure the API URL dynamically, you can add it as an environment variable in Railway:
+- Go to your project settings
+- Add variable: `VITE_API_URL` with your API endpoint
+- Redeploy the application
+
 ## Authentication
 
 The application uses JWT-based authentication. Upon successful login, the token is stored in localStorage and automatically attached to API requests.
