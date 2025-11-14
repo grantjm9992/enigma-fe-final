@@ -1,9 +1,10 @@
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -14,67 +15,108 @@ export default function Layout() {
     return <Outlet />;
   }
 
+  const isActive = (path: string) => location.pathname === path;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
+    <div className="min-h-screen bg-gray-100">
+      {/* Top Navigation Bar */}
+      <nav className="bg-gradient-to-r from-indigo-600 to-indigo-800 shadow-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-900">Boxing Gym Manager</h1>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link
-                  to="/"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/users"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Users
-                </Link>
-                <Link
-                  to="/exercises"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Exercises
-                </Link>
-                <Link
-                  to="/categories"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Categories
-                </Link>
-                <Link
-                  to="/tags"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Tags
-                </Link>
-                <Link
-                  to="/routines"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Routines
-                </Link>
-                <Link
-                  to="/sessions"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Sessions
-                </Link>
+          <div className="flex justify-between items-center h-16">
+            {/* Logo and Title */}
+            <div className="flex items-center space-x-4">
+              <div className="text-white text-3xl">🥊</div>
+              <div>
+                <h1 className="text-xl font-bold text-white">Boxing Gym Manager</h1>
+                <p className="text-xs text-indigo-200">Professional Management System</p>
               </div>
             </div>
-            <div className="flex items-center">
-              <span className="text-sm text-gray-700 mr-4">
-                {user.name} {user.surname} ({user.role})
-              </span>
+
+            {/* Navigation Links */}
+            <div className="hidden md:flex items-center space-x-1">
+              <Link
+                to="/"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  isActive('/')
+                    ? 'bg-white text-indigo-600 shadow-md'
+                    : 'text-white hover:bg-indigo-700'
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/users"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  isActive('/users')
+                    ? 'bg-white text-indigo-600 shadow-md'
+                    : 'text-white hover:bg-indigo-700'
+                }`}
+              >
+                Users
+              </Link>
+              <Link
+                to="/exercises"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  isActive('/exercises')
+                    ? 'bg-white text-indigo-600 shadow-md'
+                    : 'text-white hover:bg-indigo-700'
+                }`}
+              >
+                Exercises
+              </Link>
+              <Link
+                to="/categories"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  isActive('/categories')
+                    ? 'bg-white text-indigo-600 shadow-md'
+                    : 'text-white hover:bg-indigo-700'
+                }`}
+              >
+                Categories
+              </Link>
+              <Link
+                to="/tags"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  isActive('/tags')
+                    ? 'bg-white text-indigo-600 shadow-md'
+                    : 'text-white hover:bg-indigo-700'
+                }`}
+              >
+                Tags
+              </Link>
+              <Link
+                to="/routines"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  isActive('/routines')
+                    ? 'bg-white text-indigo-600 shadow-md'
+                    : 'text-white hover:bg-indigo-700'
+                }`}
+              >
+                Routines
+              </Link>
+              <Link
+                to="/sessions"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  isActive('/sessions')
+                    ? 'bg-white text-indigo-600 shadow-md'
+                    : 'text-white hover:bg-indigo-700'
+                }`}
+              >
+                Sessions
+              </Link>
+            </div>
+
+            {/* User Info and Logout */}
+            <div className="flex items-center space-x-4">
+              <div className="hidden sm:block text-right">
+                <p className="text-sm font-semibold text-white">
+                  {user.name} {user.surname}
+                </p>
+                <p className="text-xs text-indigo-200 capitalize">{user.role}</p>
+              </div>
               <button
                 onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md hover:shadow-lg transition-all"
               >
                 Logout
               </button>
@@ -82,7 +124,9 @@ export default function Layout() {
           </div>
         </div>
       </nav>
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <Outlet />
       </main>
     </div>
