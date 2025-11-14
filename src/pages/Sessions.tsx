@@ -16,7 +16,9 @@ export default function Sessions() {
   const [searchTerm, setSearchTerm] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [calendarViewType, setCalendarViewType] = useState<'day' | '3day' | '7day' | 'month'>('month');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   const [formData, setFormData] = useState<CreateSessionDto>({
     name: '',
@@ -246,6 +248,78 @@ export default function Sessions() {
 
   const goToToday = () => {
     setCurrentMonth(new Date());
+    setCurrentDate(new Date());
+  };
+
+  const previousDay = () => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() - 1);
+    setCurrentDate(newDate);
+  };
+
+  const nextDay = () => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + 1);
+    setCurrentDate(newDate);
+  };
+
+  const previousWeek = () => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() - 7);
+    setCurrentDate(newDate);
+  };
+
+  const nextWeek = () => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + 7);
+    setCurrentDate(newDate);
+  };
+
+  const getTimeSlots = () => {
+    const slots = [];
+    for (let hour = 6; hour < 22; hour++) {
+      slots.push(hour);
+    }
+    return slots;
+  };
+
+  const getDaysForView = () => {
+    const days: Date[] = [];
+    if (calendarViewType === 'day') {
+      days.push(new Date(currentDate));
+    } else if (calendarViewType === '3day') {
+      for (let i = 0; i < 3; i++) {
+        const day = new Date(currentDate);
+        day.setDate(day.getDate() + i);
+        days.push(day);
+      }
+    } else if (calendarViewType === '7day') {
+      const startOfWeek = new Date(currentDate);
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(startOfWeek);
+        day.setDate(day.getDate() + i);
+        days.push(day);
+      }
+    }
+    return days;
+  };
+
+  const getSessionsForTimeSlot = (day: Date, hour: number) => {
+    return sessions.filter((session) => {
+      const sessionDate = new Date(session.date);
+      return (
+        sessionDate.getFullYear() === day.getFullYear() &&
+        sessionDate.getMonth() === day.getMonth() &&
+        sessionDate.getDate() === day.getDate() &&
+        sessionDate.getHours() === hour
+      );
+    });
+  };
+
+  const getSessionPosition = (sessionDate: Date) => {
+    const minutes = sessionDate.getMinutes();
+    return (minutes / 60) * 100; // percentage within the hour
   };
 
   const filteredRoutines = routines.filter(
@@ -354,10 +428,58 @@ export default function Sessions() {
       {/* Calendar View */}
       {viewMode === 'calendar' && (
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+          {/* Calendar View Type Selector */}
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setCalendarViewType('day')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                calendarViewType === 'day'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
+            >
+              Day
+            </button>
+            <button
+              onClick={() => setCalendarViewType('3day')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                calendarViewType === '3day'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
+            >
+              3 Days
+            </button>
+            <button
+              onClick={() => setCalendarViewType('7day')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                calendarViewType === '7day'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
+            >
+              Week
+            </button>
+            <button
+              onClick={() => setCalendarViewType('month')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                calendarViewType === 'month'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
+            >
+              Month
+            </button>
+          </div>
+
           {/* Calendar Header */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">
-              {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              {calendarViewType === 'month'
+                ? currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                : calendarViewType === '7day'
+                ? `Week of ${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                : currentDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </h2>
             <div className="flex gap-2">
               <button
@@ -367,7 +489,13 @@ export default function Sessions() {
                 Today
               </button>
               <button
-                onClick={previousMonth}
+                onClick={
+                  calendarViewType === 'month'
+                    ? previousMonth
+                    : calendarViewType === '7day'
+                    ? previousWeek
+                    : previousDay
+                }
                 className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,7 +503,13 @@ export default function Sessions() {
                 </svg>
               </button>
               <button
-                onClick={nextMonth}
+                onClick={
+                  calendarViewType === 'month'
+                    ? nextMonth
+                    : calendarViewType === '7day'
+                    ? nextWeek
+                    : nextDay
+                }
                 className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -385,60 +519,149 @@ export default function Sessions() {
             </div>
           </div>
 
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-px bg-slate-700 rounded-lg overflow-hidden">
-            {/* Day headers */}
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div
-                key={day}
-                className="bg-slate-800 p-3 text-center text-sm font-semibold text-slate-400"
-              >
-                {day}
-              </div>
-            ))}
-
-            {/* Calendar days */}
-            {getDaysInMonth(currentMonth).map((day, index) => {
-              const daySessions = day ? getSessionsForDay(day) : [];
-              const isToday =
-                day &&
-                day.toDateString() === new Date().toDateString();
-
-              return (
+          {/* Month View */}
+          {calendarViewType === 'month' && (
+            <div className="grid grid-cols-7 gap-px bg-slate-700 rounded-lg overflow-hidden">
+              {/* Day headers */}
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
                 <div
-                  key={index}
-                  className={`bg-slate-800 min-h-[120px] p-2 ${
-                    !day ? 'bg-slate-900' : ''
-                  } ${isToday ? 'ring-2 ring-indigo-500' : ''}`}
+                  key={day}
+                  className="bg-slate-800 p-3 text-center text-sm font-semibold text-slate-400"
                 >
-                  {day && (
-                    <>
-                      <div className={`text-sm font-medium mb-2 ${isToday ? 'text-indigo-400' : 'text-slate-400'}`}>
-                        {day.getDate()}
-                      </div>
-                      <div className="space-y-1">
-                        {daySessions.slice(0, 3).map((session) => (
-                          <button
-                            key={session._id}
-                            onClick={() => openEditModal(session)}
-                            className="w-full text-left px-2 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded text-xs text-indigo-300 transition-colors"
-                          >
-                            <div className="font-medium truncate">{formatTime(session.date)}</div>
-                            <div className="truncate">{session.name}</div>
-                          </button>
-                        ))}
-                        {daySessions.length > 3 && (
-                          <div className="text-xs text-slate-500 px-2">
-                            +{daySessions.length - 3} more
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
+                  {day}
                 </div>
-              );
-            })}
-          </div>
+              ))}
+
+              {/* Calendar days */}
+              {getDaysInMonth(currentMonth).map((day, index) => {
+                const daySessions = day ? getSessionsForDay(day) : [];
+                const isToday =
+                  day &&
+                  day.toDateString() === new Date().toDateString();
+
+                return (
+                  <div
+                    key={index}
+                    className={`bg-slate-800 min-h-[120px] p-2 ${
+                      !day ? 'bg-slate-900' : ''
+                    } ${isToday ? 'ring-2 ring-indigo-500' : ''}`}
+                  >
+                    {day && (
+                      <>
+                        <div className={`text-sm font-medium mb-2 ${isToday ? 'text-indigo-400' : 'text-slate-400'}`}>
+                          {day.getDate()}
+                        </div>
+                        <div className="space-y-1">
+                          {daySessions.slice(0, 3).map((session) => (
+                            <button
+                              key={session._id}
+                              onClick={() => openEditModal(session)}
+                              className="w-full text-left px-2 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded text-xs text-indigo-300 transition-colors"
+                            >
+                              <div className="font-medium truncate">{formatTime(session.date)}</div>
+                              <div className="truncate">{session.name}</div>
+                            </button>
+                          ))}
+                          {daySessions.length > 3 && (
+                            <div className="text-xs text-slate-500 px-2">
+                              +{daySessions.length - 3} more
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Time Grid View (Day, 3 Days, Week) */}
+          {calendarViewType !== 'month' && (
+            <div className="overflow-x-auto">
+              <div className="min-w-[600px]">
+                {/* Day headers */}
+                <div className="grid gap-px bg-slate-700 rounded-t-lg overflow-hidden" style={{ gridTemplateColumns: `60px repeat(${getDaysForView().length}, 1fr)` }}>
+                  <div className="bg-slate-800 p-3"></div>
+                  {getDaysForView().map((day, index) => {
+                    const isToday = day.toDateString() === new Date().toDateString();
+                    return (
+                      <div
+                        key={index}
+                        className={`bg-slate-800 p-3 text-center ${isToday ? 'bg-indigo-900/30' : ''}`}
+                      >
+                        <div className={`text-xs font-medium ${isToday ? 'text-indigo-400' : 'text-slate-400'}`}>
+                          {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                        </div>
+                        <div className={`text-lg font-bold ${isToday ? 'text-indigo-300' : 'text-white'}`}>
+                          {day.getDate()}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Time slots grid */}
+                <div className="relative">
+                  {getTimeSlots().map((hour) => (
+                    <div
+                      key={hour}
+                      className="grid gap-px bg-slate-700"
+                      style={{ gridTemplateColumns: `60px repeat(${getDaysForView().length}, 1fr)` }}
+                    >
+                      {/* Time label */}
+                      <div className="bg-slate-800 p-2 text-right pr-3 border-r border-slate-700">
+                        <span className="text-xs font-medium text-slate-400">
+                          {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                        </span>
+                      </div>
+
+                      {/* Time slot cells for each day */}
+                      {getDaysForView().map((day, dayIndex) => {
+                        const sessionsInSlot = getSessionsForTimeSlot(day, hour);
+                        return (
+                          <div
+                            key={dayIndex}
+                            className="bg-slate-800 min-h-[60px] p-1 relative border-t border-slate-700"
+                          >
+                            {sessionsInSlot.map((session) => {
+                              const sessionDate = new Date(session.date);
+                              const topPosition = getSessionPosition(sessionDate);
+                              const durationHeight = session.duration ? (session.duration / 60) * 60 : 60; // 60px per hour
+
+                              return (
+                                <button
+                                  key={session._id}
+                                  onClick={() => openEditModal(session)}
+                                  className="absolute left-1 right-1 bg-indigo-600 hover:bg-indigo-700 border border-indigo-500 rounded px-2 py-1 text-left transition-colors overflow-hidden"
+                                  style={{
+                                    top: `${topPosition}%`,
+                                    height: `${Math.min(durationHeight, 60 - (topPosition / 100) * 60)}px`,
+                                  }}
+                                >
+                                  <div className="text-xs font-semibold text-white truncate">
+                                    {formatTime(session.date)}
+                                  </div>
+                                  <div className="text-xs text-indigo-100 truncate">
+                                    {session.name}
+                                  </div>
+                                  {session.duration && (
+                                    <div className="text-xs text-indigo-200">
+                                      {session.duration} min
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
