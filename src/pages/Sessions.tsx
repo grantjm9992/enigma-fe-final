@@ -24,7 +24,7 @@ export default function Sessions() {
     name: '',
     description: '',
     date: '',
-    duration: 60,
+    duration: 3600, // 60 minutes in seconds
     instructorId: '',
     participantIds: [],
     routines: [],
@@ -102,7 +102,7 @@ export default function Sessions() {
       name: '',
       description: '',
       date: '',
-      duration: 60,
+      duration: 3600, // 60 minutes in seconds
       instructorId: trainers[0]?._id || '',
       participantIds: [],
       routines: [],
@@ -130,7 +130,7 @@ export default function Sessions() {
       name: session.name,
       description: session.description || '',
       date: convertToDatetimeLocal(session.date),
-      duration: session.duration || 60,
+      duration: session.duration || 3600, // 60 minutes in seconds
       instructorId: session.instructorId,
       participantIds: session.participantIds || [],
       routines: session.routines || [],
@@ -627,7 +627,7 @@ export default function Sessions() {
                             {sessionsInSlot.map((session) => {
                               const sessionDate = new Date(session.date);
                               const topPosition = getSessionPosition(sessionDate);
-                              const durationHeight = session.duration ? (session.duration / 60) * 60 : 60; // 60px per hour
+                              const durationHeight = session.duration ? (session.duration / 60) : 60; // 60px per hour, duration in seconds
 
                               return (
                                 <button
@@ -647,7 +647,7 @@ export default function Sessions() {
                                   </div>
                                   {session.duration && (
                                     <div className="text-xs text-indigo-200">
-                                      {session.duration} min
+                                      {Math.round(session.duration / 60)} min
                                     </div>
                                   )}
                                 </button>
@@ -851,14 +851,14 @@ export default function Sessions() {
                       onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
                       className="block w-full rounded-lg bg-slate-700 border border-slate-600 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     >
-                      <option value={15}>15 minutes</option>
-                      <option value={30}>30 minutes</option>
-                      <option value={45}>45 minutes</option>
-                      <option value={60}>1 hour</option>
-                      <option value={75}>1 hour 15 minutes</option>
-                      <option value={90}>1 hour 30 minutes</option>
-                      <option value={105}>1 hour 45 minutes</option>
-                      <option value={120}>2 hours</option>
+                      <option value={900}>15 minutes</option>
+                      <option value={1800}>30 minutes</option>
+                      <option value={2700}>45 minutes</option>
+                      <option value={3600}>1 hour</option>
+                      <option value={4500}>1 hour 15 minutes</option>
+                      <option value={5400}>1 hour 30 minutes</option>
+                      <option value={6300}>1 hour 45 minutes</option>
+                      <option value={7200}>2 hours</option>
                     </select>
                   </div>
                   <div>
