@@ -105,7 +105,9 @@ export default function Routines() {
   const addExerciseFromLibrary = (exercise: Exercise) => {
     const newExercise: EmbeddedExercise = {
       name: exercise.name,
+      categoryId: exercise.categoryId,
       category: exercise.category?.name || '',
+      tagIds: exercise.tagIds || [],
       tags: exercise.tags?.map((t) => t.name) || [],
       duration: exercise.duration,
       description: exercise.description || '',
@@ -233,15 +235,37 @@ export default function Routines() {
                 {routine.exercises && routine.exercises.length > 0 && (
                   <div className="mb-4">
                     <p className="text-sm font-semibold text-slate-300 mb-2">Exercise List:</p>
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
                       {routine.exercises.map((ex, idx) => (
                         <div
                           key={idx}
-                          className="text-sm text-slate-400 bg-slate-700/50 rounded px-3 py-2"
+                          className="text-sm bg-slate-700/50 rounded px-3 py-2"
                         >
-                          {idx + 1}. {ex.name}
-                          {ex.sets && ex.sets > 1 && ` • ${ex.sets} sets`}
-                          {ex.reps && ex.reps > 0 && ` • ${ex.reps} reps`}
+                          <div className="text-slate-300 font-medium mb-1">
+                            {idx + 1}. {ex.name}
+                            {ex.sets && ex.sets > 1 && ` • ${ex.sets} sets`}
+                            {ex.reps && ex.reps > 0 && ` • ${ex.reps} reps`}
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {ex.category && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-purple-900/50 text-purple-200 border border-purple-700/50">
+                                {ex.category}
+                              </span>
+                            )}
+                            {ex.tags && ex.tags.length > 0 && ex.tags.slice(0, 3).map((tag, tagIdx) => (
+                              <span
+                                key={tagIdx}
+                                className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-900/50 text-blue-200 border border-blue-700/50"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {ex.tags && ex.tags.length > 3 && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs text-slate-400">
+                                +{ex.tags.length - 3} more
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -363,6 +387,29 @@ export default function Routines() {
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="text-sm font-semibold text-slate-300">#{idx + 1}</span>
                                 <h4 className="text-white font-semibold">{ex.name}</h4>
+                              </div>
+
+                              {/* Category and Tags Badges */}
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                {ex.category && (
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-900/50 text-purple-200 border border-purple-700">
+                                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                      <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                                    </svg>
+                                    {ex.category}
+                                  </span>
+                                )}
+                                {ex.tags && ex.tags.length > 0 && ex.tags.map((tag, tagIdx) => (
+                                  <span
+                                    key={tagIdx}
+                                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/50 text-blue-200 border border-blue-700"
+                                  >
+                                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                                    </svg>
+                                    {tag}
+                                  </span>
+                                ))}
                               </div>
 
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

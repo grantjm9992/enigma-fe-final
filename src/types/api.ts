@@ -117,7 +117,9 @@ export interface UpdateExerciseDto {
 // Embedded Exercise (for Routines)
 export interface EmbeddedExercise {
   name: string;
+  categoryId: string;
   category: string;
+  tagIds: string[];
   tags: string[];
   duration: number;
   description?: string;
