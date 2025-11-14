@@ -27,19 +27,19 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-block p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full mb-4">
+            <div className="inline-block p-4 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full mb-4 shadow-lg shadow-indigo-500/50">
               <div className="text-5xl text-white">🥊</div>
             </div>
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
+            <h2 className="text-3xl font-extrabold text-white mb-2">
               Boxing Gym Manager
             </h2>
-            <p className="text-gray-600">
+            <p className="text-slate-400">
               Sign in to access your dashboard
             </p>
           </div>
@@ -47,17 +47,17 @@ export default function Login() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+              <div className="rounded-lg bg-red-900/50 border border-red-700 p-4">
                 <div className="flex items-center">
-                  <span className="text-red-500 mr-2">⚠️</span>
-                  <p className="text-sm text-red-700 font-medium">{error}</p>
+                  <span className="text-red-400 mr-2">⚠️</span>
+                  <p className="text-sm text-red-300 font-medium">{error}</p>
                 </div>
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-semibold text-slate-300 mb-2">
                   Email Address
                 </label>
                 <input
@@ -68,13 +68,13 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all placeholder-slate-400"
                   placeholder="Enter your email"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-semibold text-slate-300 mb-2">
                   Password
                 </label>
                 <input
@@ -85,7 +85,7 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all placeholder-slate-400"
                   placeholder="Enter your password"
                 />
               </div>
@@ -94,7 +94,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center items-center py-3 px-4 border border-transparent text-base font-semibold rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+              className="w-full flex justify-center items-center py-3 px-4 border border-transparent text-base font-semibold rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/50 hover:shadow-indigo-500/70 transition-all duration-200 transform hover:-translate-y-0.5"
             >
               {loading ? (
                 <>
@@ -117,7 +117,7 @@ export default function Login() {
 
           {/* Footer */}
           <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-slate-500">
               Professional boxing gym management system
             </p>
           </div>
@@ -125,7 +125,7 @@ export default function Login() {
 
         {/* Decorative Element */}
         <div className="mt-8 text-center">
-          <p className="text-white text-sm font-medium">
+          <p className="text-slate-300 text-sm font-medium">
             Secure & Reliable Management Platform
           </p>
         </div>

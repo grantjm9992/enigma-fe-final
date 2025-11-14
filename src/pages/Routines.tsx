@@ -10,26 +10,14 @@ export default function Routines() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [isExercisePickerOpen, setIsExercisePickerOpen] = useState(false);
-  const [editingExerciseIndex, setEditingExerciseIndex] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<CreateRoutineDto>({
     name: '',
     description: '',
     exercises: [],
     difficulty: '',
-  });
-
-  const [exerciseForm, setExerciseForm] = useState<EmbeddedExercise>({
-    name: '',
-    category: '',
-    tags: [],
-    duration: 0,
-    description: '',
-    videoUrl: '',
-    sets: 1,
-    reps: 0,
-    restTime: 0,
-    notes: '',
   });
 
   useEffect(() => {
@@ -105,59 +93,32 @@ export default function Routines() {
     setEditingRoutine(null);
   };
 
-  const openExercisePicker = (index?: number) => {
-    if (index !== undefined) {
-      setEditingExerciseIndex(index);
-      setExerciseForm(formData.exercises[index]);
-    } else {
-      setEditingExerciseIndex(null);
-      setExerciseForm({
-        name: '',
-        category: '',
-        tags: [],
-        duration: 0,
-        description: '',
-        videoUrl: '',
-        sets: 1,
-        reps: 0,
-        restTime: 0,
-        notes: '',
-      });
-    }
+  const openExercisePicker = () => {
+    setSearchTerm('');
     setIsExercisePickerOpen(true);
   };
 
   const closeExercisePicker = () => {
     setIsExercisePickerOpen(false);
-    setEditingExerciseIndex(null);
   };
 
-  const selectExercise = (exercise: Exercise) => {
-    setExerciseForm({
+  const addExerciseFromLibrary = (exercise: Exercise) => {
+    const newExercise: EmbeddedExercise = {
       name: exercise.name,
       category: exercise.category?.name || '',
       tags: exercise.tags?.map((t) => t.name) || [],
       duration: exercise.duration,
       description: exercise.description || '',
       videoUrl: exercise.videoUrl || '',
-      sets: 1,
-      reps: 0,
-      restTime: 0,
+      sets: 3,
+      reps: 10,
+      restTime: 60,
       notes: '',
+    };
+    setFormData({
+      ...formData,
+      exercises: [...formData.exercises, newExercise],
     });
-  };
-
-  const saveExerciseToRoutine = () => {
-    if (editingExerciseIndex !== null) {
-      const updated = [...formData.exercises];
-      updated[editingExerciseIndex] = exerciseForm;
-      setFormData({ ...formData, exercises: updated });
-    } else {
-      setFormData({
-        ...formData,
-        exercises: [...formData.exercises, exerciseForm],
-      });
-    }
     closeExercisePicker();
   };
 
@@ -168,89 +129,135 @@ export default function Routines() {
     });
   };
 
+  const updateExercise = (index: number, field: keyof EmbeddedExercise, value: any) => {
+    const updated = [...formData.exercises];
+    updated[index] = { ...updated[index], [field]: value };
+    setFormData({ ...formData, exercises: updated });
+  };
+
+  // Drag and Drop handlers
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const updated = [...formData.exercises];
+    const draggedItem = updated[draggedIndex];
+    updated.splice(draggedIndex, 1);
+    updated.splice(index, 0, draggedItem);
+
+    setFormData({ ...formData, exercises: updated });
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
   };
 
+  const filteredExercises = exercises.filter((ex) =>
+    ex.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="px-4 sm:px-6 lg:px-8">
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-2xl font-semibold text-gray-900">Routines</h1>
-          <p className="mt-2 text-sm text-gray-700">
-            Create workout routines from exercises
-          </p>
-        </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <button
-            onClick={openCreateModal}
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
-          >
-            Add Routine
-          </button>
+      {/* Header */}
+      <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-lg p-6 mb-6">
+        <div className="sm:flex sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-white">Routines</h1>
+            <p className="mt-2 text-sm text-slate-400">
+              Build workout routines from exercises
+            </p>
+          </div>
+          <div className="mt-4 sm:mt-0">
+            <button
+              onClick={openCreateModal}
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-lg shadow-lg shadow-indigo-500/50 transition-all"
+            >
+              <span className="mr-2">+</span> Add Routine
+            </button>
+          </div>
         </div>
       </div>
 
       {error && (
-        <div className="mt-4 rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-lg bg-red-900/50 border border-red-700 p-4">
+          <div className="text-sm text-red-300">{error}</div>
         </div>
       )}
 
       {loading ? (
-        <div className="mt-8 text-center">Loading...</div>
+        <div className="mt-8 text-center text-slate-400">Loading...</div>
       ) : (
-        <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {routines.map((routine) => (
             <div
               key={routine._id}
-              className="bg-white overflow-hidden shadow rounded-lg border border-gray-200"
+              className="bg-slate-800 border border-slate-700 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
             >
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg font-medium text-gray-900">{routine.name}</h3>
-                {routine.description && (
-                  <p className="mt-1 text-sm text-gray-500">{routine.description}</p>
-                )}
-                <div className="mt-2 text-sm text-gray-500">
-                  <p>
-                    <span className="font-semibold">Exercises:</span> {routine.exercises?.length || 0}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Total Duration:</span>{' '}
-                    {formatDuration(routine.totalDuration || 0)}
-                  </p>
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="text-xl font-semibold text-white">{routine.name}</h3>
+                    {routine.description && (
+                      <p className="mt-1 text-sm text-slate-400">{routine.description}</p>
+                    )}
+                  </div>
                   {routine.difficulty && (
-                    <p>
-                      <span className="font-semibold">Difficulty:</span> {routine.difficulty}
-                    </p>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-600/20 text-purple-400 border border-purple-500/30">
+                      {routine.difficulty}
+                    </span>
                   )}
                 </div>
+
+                <div className="space-y-2 text-sm text-slate-400 mb-4">
+                  <p>
+                    <span className="font-semibold text-slate-300">Exercises:</span>{' '}
+                    {routine.exercises?.length || 0}
+                  </p>
+                  <p>
+                    <span className="font-semibold text-slate-300">Total Duration:</span>{' '}
+                    {formatDuration(routine.totalDuration || 0)}
+                  </p>
+                </div>
+
                 {routine.exercises && routine.exercises.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-sm font-semibold text-gray-700 mb-2">Exercises:</p>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                  <div className="mb-4">
+                    <p className="text-sm font-semibold text-slate-300 mb-2">Exercise List:</p>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
                       {routine.exercises.map((ex, idx) => (
-                        <li key={idx}>
-                          {idx + 1}. {ex.name} ({formatDuration(ex.duration)})
-                          {ex.sets && ex.sets > 1 && ` - ${ex.sets} sets`}
-                          {ex.reps && ex.reps > 0 && ` x ${ex.reps} reps`}
-                        </li>
+                        <div
+                          key={idx}
+                          className="text-sm text-slate-400 bg-slate-700/50 rounded px-3 py-2"
+                        >
+                          {idx + 1}. {ex.name}
+                          {ex.sets && ex.sets > 1 && ` • ${ex.sets} sets`}
+                          {ex.reps && ex.reps > 0 && ` • ${ex.reps} reps`}
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 )}
-                <div className="mt-4 flex space-x-3">
+
+                <div className="flex space-x-3 pt-4 border-t border-slate-700">
                   <button
                     onClick={() => openEditModal(routine)}
-                    className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                    className="flex-1 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(routine._id)}
-                    className="text-red-600 hover:text-red-900 text-sm font-medium"
+                    className="flex-1 py-2 px-4 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     Delete
                   </button>
@@ -261,39 +268,47 @@ export default function Routines() {
         </div>
       )}
 
+      {/* Create/Edit Routine Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-lg p-6 max-w-4xl w-full my-8 max-h-screen overflow-y-auto">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
-              {editingRoutine ? 'Edit Routine' : 'Create Routine'}
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl max-w-4xl w-full my-8 max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-slate-800 border-b border-slate-700 p-6 z-10">
+              <h2 className="text-2xl font-semibold text-white">
+                {editingRoutine ? 'Edit Routine' : 'Create Routine'}
+              </h2>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6">
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Name</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="e.g., Morning Cardio Routine"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Description</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={2}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Describe this routine..."
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Difficulty</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Difficulty</label>
                   <select
                     value={formData.difficulty}
                     onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="">Select difficulty</option>
                     <option value="beginner">Beginner</option>
@@ -301,69 +316,140 @@ export default function Routines() {
                     <option value="advanced">Advanced</option>
                   </select>
                 </div>
+
+                {/* Exercises Section */}
                 <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-medium text-gray-700">Exercises</label>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="block text-sm font-semibold text-slate-300">
+                      Exercises ({formData.exercises.length})
+                    </label>
                     <button
                       type="button"
-                      onClick={() => openExercisePicker()}
-                      className="text-sm text-indigo-600 hover:text-indigo-900 font-medium"
+                      onClick={openExercisePicker}
+                      className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-sm font-semibold rounded-lg shadow-lg transition-all"
                     >
                       + Add Exercise
                     </button>
                   </div>
-                  <div className="space-y-2">
-                    {formData.exercises.map((ex, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between p-3 border border-gray-200 rounded-md"
-                      >
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{ex.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {formatDuration(ex.duration)}
-                            {ex.sets && ex.sets > 1 && ` • ${ex.sets} sets`}
-                            {ex.reps && ex.reps > 0 && ` • ${ex.reps} reps`}
-                            {ex.restTime && ex.restTime > 0 && ` • ${ex.restTime}s rest`}
-                          </p>
+
+                  {formData.exercises.length === 0 ? (
+                    <div className="text-center py-12 bg-slate-700/30 border-2 border-dashed border-slate-600 rounded-lg">
+                      <p className="text-slate-400">No exercises added yet</p>
+                      <p className="text-sm text-slate-500 mt-1">Click "Add Exercise" to get started</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {formData.exercises.map((ex, idx) => (
+                        <div
+                          key={idx}
+                          draggable
+                          onDragStart={() => handleDragStart(idx)}
+                          onDragOver={(e) => handleDragOver(e, idx)}
+                          onDragEnd={handleDragEnd}
+                          className={`bg-slate-700 border border-slate-600 rounded-lg p-4 cursor-move hover:border-indigo-500 transition-all ${
+                            draggedIndex === idx ? 'opacity-50' : ''
+                          }`}
+                        >
+                          <div className="flex items-start gap-4">
+                            {/* Drag Handle */}
+                            <div className="flex-shrink-0 text-slate-400 mt-1">
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"/>
+                              </svg>
+                            </div>
+
+                            {/* Exercise Details */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-sm font-semibold text-slate-300">#{idx + 1}</span>
+                                <h4 className="text-white font-semibold">{ex.name}</h4>
+                              </div>
+
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div>
+                                  <label className="block text-xs text-slate-400 mb-1">Sets</label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={ex.sets || 1}
+                                    onChange={(e) => updateExercise(idx, 'sets', parseInt(e.target.value))}
+                                    className="w-full px-3 py-2 bg-slate-600 border border-slate-500 text-white text-sm rounded focus:ring-2 focus:ring-indigo-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-slate-400 mb-1">Reps</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={ex.reps || 0}
+                                    onChange={(e) => updateExercise(idx, 'reps', parseInt(e.target.value))}
+                                    className="w-full px-3 py-2 bg-slate-600 border border-slate-500 text-white text-sm rounded focus:ring-2 focus:ring-indigo-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-slate-400 mb-1">Rest (s)</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={ex.restTime || 0}
+                                    onChange={(e) => updateExercise(idx, 'restTime', parseInt(e.target.value))}
+                                    className="w-full px-3 py-2 bg-slate-600 border border-slate-500 text-white text-sm rounded focus:ring-2 focus:ring-indigo-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-slate-400 mb-1">Duration</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={ex.duration || 0}
+                                    onChange={(e) => updateExercise(idx, 'duration', parseInt(e.target.value))}
+                                    className="w-full px-3 py-2 bg-slate-600 border border-slate-500 text-white text-sm rounded focus:ring-2 focus:ring-indigo-500"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="mt-3">
+                                <input
+                                  type="text"
+                                  value={ex.notes || ''}
+                                  onChange={(e) => updateExercise(idx, 'notes', e.target.value)}
+                                  placeholder="Add notes..."
+                                  className="w-full px-3 py-2 bg-slate-600 border border-slate-500 text-white text-sm rounded focus:ring-2 focus:ring-indigo-500 placeholder-slate-400"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Remove Button */}
+                            <button
+                              type="button"
+                              onClick={() => removeExercise(idx)}
+                              className="flex-shrink-0 p-2 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded transition-colors"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <button
-                            type="button"
-                            onClick={() => openExercisePicker(idx)}
-                            className="text-indigo-600 hover:text-indigo-900 text-sm"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeExercise(idx)}
-                            className="text-red-600 hover:text-red-900 text-sm"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    {formData.exercises.length === 0 && (
-                      <p className="text-sm text-gray-500 italic">No exercises added yet</p>
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="mt-6 flex justify-end space-x-3">
+
+              <div className="mt-8 flex justify-end space-x-3">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                  className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-lg shadow-lg transition-all"
                 >
-                  {editingRoutine ? 'Update' : 'Create'}
+                  {editingRoutine ? 'Update' : 'Create'} Routine
                 </button>
               </div>
             </form>
@@ -371,121 +457,66 @@ export default function Routines() {
         </div>
       )}
 
+      {/* Exercise Picker Modal */}
       {isExercisePickerOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-lg p-6 max-w-4xl w-full my-8 max-h-screen overflow-y-auto">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
-              {editingExerciseIndex !== null ? 'Edit Exercise' : 'Add Exercise'}
-            </h2>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col">
+            <div className="p-6 border-b border-slate-700">
+              <h2 className="text-2xl font-semibold text-white mb-4">Select Exercise</h2>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search exercises..."
+                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 placeholder-slate-400"
+                autoFocus
+              />
+            </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Or select from existing exercises:
-              </label>
-              <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md">
-                {exercises.map((exercise) => (
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredExercises.map((exercise) => (
                   <button
                     key={exercise._id}
                     type="button"
-                    onClick={() => selectExercise(exercise)}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-100 border-b border-gray-200"
+                    onClick={() => addExerciseFromLibrary(exercise)}
+                    className="text-left p-4 bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-indigo-500 rounded-lg transition-all group"
                   >
-                    <p className="text-sm font-medium">{exercise.name}</p>
-                    <p className="text-xs text-gray-500">{formatDuration(exercise.duration)}</p>
+                    <h4 className="font-semibold text-white group-hover:text-indigo-400 mb-1">
+                      {exercise.name}
+                    </h4>
+                    <p className="text-sm text-slate-400">
+                      {exercise.category?.name || 'Uncategorized'} • {formatDuration(exercise.duration)}
+                    </p>
+                    {exercise.tags && exercise.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {exercise.tags.map((tag) => (
+                          <span
+                            key={tag._id}
+                            className="px-2 py-0.5 text-xs rounded-full bg-slate-600 text-slate-300"
+                          >
+                            {tag.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
+              {filteredExercises.length === 0 && (
+                <div className="text-center py-12 text-slate-400">
+                  No exercises found
+                </div>
+              )}
             </div>
 
-            <div className="space-y-4 border-t pt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={exerciseForm.name}
-                    onChange={(e) => setExerciseForm({ ...exerciseForm, name: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Duration (seconds)</label>
-                  <input
-                    type="number"
-                    required
-                    min="0"
-                    value={exerciseForm.duration}
-                    onChange={(e) =>
-                      setExerciseForm({ ...exerciseForm, duration: parseInt(e.target.value) })
-                    }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Sets</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={exerciseForm.sets || 1}
-                    onChange={(e) =>
-                      setExerciseForm({ ...exerciseForm, sets: parseInt(e.target.value) })
-                    }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Reps</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={exerciseForm.reps || 0}
-                    onChange={(e) =>
-                      setExerciseForm({ ...exerciseForm, reps: parseInt(e.target.value) })
-                    }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Rest Time (s)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={exerciseForm.restTime || 0}
-                    onChange={(e) =>
-                      setExerciseForm({ ...exerciseForm, restTime: parseInt(e.target.value) })
-                    }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Notes</label>
-                <textarea
-                  value={exerciseForm.notes}
-                  onChange={(e) => setExerciseForm({ ...exerciseForm, notes: e.target.value })}
-                  rows={2}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end space-x-3">
+            <div className="p-6 border-t border-slate-700">
               <button
                 type="button"
                 onClick={closeExercisePicker}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition-colors"
               >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={saveExerciseToRoutine}
-                className="rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-              >
-                {editingExerciseIndex !== null ? 'Update Exercise' : 'Add Exercise'}
+                Close
               </button>
             </div>
           </div>
