@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { User, LoginDto } from '../types/api';
 import { authApi } from '../services/api';
+import { tokenManager } from '../services/tokenManager';
 
 interface AuthContextType {
   user: User | null;
@@ -15,7 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('auth_token'));
+  const [token, setToken] = useState<string | null>(tokenManager.getToken());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(response.data);
         } catch (error) {
           console.error('Failed to load user profile:', error);
-          localStorage.removeItem('auth_token');
+          tokenManager.clearToken();
           setToken(null);
         }
       }
@@ -38,14 +39,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (credentials: LoginDto) => {
     const response = await authApi.login(credentials);
-    const { access_token, user: userData } = response.data;
-    localStorage.setItem('auth_token', access_token);
-    setToken(access_token);
+    const { accessToken, user: userData } = response.data;
+    tokenManager.setToken(accessToken);
+    setToken(accessToken);
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('auth_token');
+    tokenManager.clearToken();
     setToken(null);
     setUser(null);
   };

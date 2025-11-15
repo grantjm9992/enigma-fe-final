@@ -8,6 +8,7 @@ import type {
   Routine, CreateRoutineDto, UpdateRoutineDto,
   Session, CreateSessionDto, UpdateSessionDto,
 } from '../types/api';
+import { tokenManager } from './tokenManager';
 
 const API_BASE_URL = 'https://enigma-ts-production.up.railway.app';
 
@@ -20,7 +21,7 @@ const api = axios.create({
 
 // Add auth token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
+  const token = tokenManager.getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
