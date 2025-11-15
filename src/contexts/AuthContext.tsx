@@ -21,10 +21,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Helper function to normalize user object (map 'id' to '_id')
   const normalizeUser = (userData: any): User => {
-    return {
+    console.log('DEBUG normalizeUser - Raw userData:', userData);
+    console.log('DEBUG normalizeUser - userData.id:', userData.id);
+    console.log('DEBUG normalizeUser - userData._id:', userData._id);
+
+    const normalized = {
       ...userData,
       _id: userData.id || userData._id,
     };
+
+    console.log('DEBUG normalizeUser - Normalized _id:', normalized._id);
+    return normalized;
   };
 
   useEffect(() => {
