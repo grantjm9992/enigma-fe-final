@@ -6,14 +6,17 @@ export default function Sessions() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [trainers, setTrainers] = useState<User[]>([]);
+  const [students, setStudents] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRoutinePickerOpen, setIsRoutinePickerOpen] = useState(false);
+  const [isStudentPickerOpen, setIsStudentPickerOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [studentSearchTerm, setStudentSearchTerm] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [calendarViewType, setCalendarViewType] = useState<'day' | '3day' | '7day' | 'month'>('month');
@@ -44,12 +47,14 @@ export default function Sessions() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [routinesRes, trainersRes] = await Promise.all([
+      const [routinesRes, trainersRes, studentsRes] = await Promise.all([
         routinesApi.getAll(),
         usersApi.getAll('trainer'),
+        usersApi.getAll('user'),
       ]);
       setRoutines(routinesRes.data);
       setTrainers(trainersRes.data);
+      setStudents(studentsRes.data);
       await loadSessions();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load data');
@@ -145,6 +150,7 @@ export default function Sessions() {
     setIsModalOpen(false);
     setEditingSession(null);
     setSearchTerm('');
+    setStudentSearchTerm('');
   };
 
   const addRoutine = (routine: Routine) => {
@@ -164,6 +170,22 @@ export default function Sessions() {
     const updated = [...(formData.routines || [])];
     updated.splice(index, 1);
     setFormData({ ...formData, routines: updated });
+  };
+
+  const addStudent = (studentId: string) => {
+    // Check if student is already added
+    const isAlreadyAdded = formData.participantIds?.includes(studentId);
+    if (!isAlreadyAdded) {
+      setFormData({
+        ...formData,
+        participantIds: [...(formData.participantIds || []), studentId],
+      });
+    }
+  };
+
+  const removeStudent = (studentId: string) => {
+    const updated = formData.participantIds?.filter(id => id !== studentId) || [];
+    setFormData({ ...formData, participantIds: updated });
   };
 
   const handleDragStart = (index: number) => {
@@ -326,6 +348,13 @@ export default function Sessions() {
     (routine) =>
       routine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       routine.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredStudents = students.filter(
+    (student) =>
+      student.name.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
+      student.surname.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
+      student.email.toLowerCase().includes(studentSearchTerm.toLowerCase())
   );
 
   return (
@@ -925,6 +954,76 @@ export default function Sessions() {
                   />
                 </div>
 
+                {/* Students/Participants */}
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="block text-sm font-medium text-slate-300">
+                      Participants ({formData.participantIds?.length || 0}
+                      {formData.maxParticipants ? ` / ${formData.maxParticipants}` : ''})
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsStudentPickerOpen(true)}
+                      className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      + Add Students
+                    </button>
+                  </div>
+
+                  {formData.participantIds && formData.participantIds.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-2">
+                      {formData.participantIds.map((studentId) => {
+                        const student = students.find(s => s._id === studentId);
+                        if (!student) return null;
+                        return (
+                          <div
+                            key={studentId}
+                            className="flex items-center bg-slate-700 border border-slate-600 rounded-lg p-3 hover:border-slate-500 transition-all"
+                          >
+                            <div className="flex-1">
+                              <p className="text-white font-medium">
+                                {student.name} {student.surname}
+                              </p>
+                              <p className="text-xs text-slate-400">{student.email}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeStudent(studentId)}
+                              className="ml-3 text-red-400 hover:text-red-300 transition-colors"
+                            >
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-slate-700/50 rounded-lg border-2 border-dashed border-slate-600">
+                      <div className="text-3xl mb-2">👥</div>
+                      <p className="text-sm text-slate-400">No participants added yet</p>
+                      <button
+                        type="button"
+                        onClick={() => setIsStudentPickerOpen(true)}
+                        className="mt-3 text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors"
+                      >
+                        Add students to this session
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 {/* Routines */}
                 <div>
                   <div className="flex justify-between items-center mb-3">
@@ -1112,6 +1211,109 @@ export default function Sessions() {
                   );
                 })
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Student Picker Modal */}
+      {isStudentPickerOpen && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-[60] backdrop-blur-sm">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-white">Select Students</h3>
+              <button
+                onClick={() => {
+                  setIsStudentPickerOpen(false);
+                  setStudentSearchTerm('');
+                }}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Search students by name or email..."
+              value={studentSearchTerm}
+              onChange={(e) => setStudentSearchTerm(e.target.value)}
+              className="mb-4 block w-full rounded-lg bg-slate-700 border border-slate-600 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              autoFocus
+            />
+
+            <div className="flex-1 overflow-y-auto space-y-2">
+              {filteredStudents.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-2">🔍</div>
+                  <p className="text-slate-400">No students found</p>
+                </div>
+              ) : (
+                filteredStudents.map((student) => {
+                  const isAdded = formData.participantIds?.includes(student._id);
+                  return (
+                    <button
+                      key={student._id}
+                      type="button"
+                      onClick={() => {
+                        if (!isAdded) {
+                          addStudent(student._id);
+                        }
+                      }}
+                      disabled={isAdded}
+                      className={`w-full text-left p-4 rounded-lg border transition-all ${
+                        isAdded
+                          ? 'bg-slate-700/50 border-slate-600 opacity-50 cursor-not-allowed'
+                          : 'bg-slate-700 border-slate-600 hover:border-indigo-500 hover:bg-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-white mb-1">
+                            {student.name} {student.surname}
+                          </h4>
+                          <p className="text-sm text-slate-400">{student.email}</p>
+                          <p className="text-xs text-slate-500">{student.phone}</p>
+                        </div>
+                        {isAdded && (
+                          <span className="ml-2 text-green-400 flex-shrink-0">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-slate-700 flex justify-between items-center">
+              <p className="text-sm text-slate-400">
+                {formData.participantIds?.length || 0} student(s) selected
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsStudentPickerOpen(false);
+                  setStudentSearchTerm('');
+                }}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>
