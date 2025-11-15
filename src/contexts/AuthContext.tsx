@@ -19,12 +19,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(tokenManager.getToken());
   const [isLoading, setIsLoading] = useState(true);
 
+  // Helper function to normalize user object (map 'id' to '_id')
+  const normalizeUser = (userData: any): User => {
+    return {
+      ...userData,
+      _id: userData.id || userData._id,
+    };
+  };
+
   useEffect(() => {
     const loadUser = async () => {
       if (token) {
         try {
           const response = await authApi.getProfile();
-          setUser(response.data);
+          const normalizedUser = normalizeUser(response.data);
+          setUser(normalizedUser);
         } catch (error) {
           console.error('Failed to load user profile:', error);
           tokenManager.clearToken();
@@ -41,11 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const response = await authApi.login(credentials);
     const { accessToken, user: userData } = response.data;
 
-    // Map 'id' to '_id' if needed for consistency
-    const normalizedUser = {
-      ...userData,
-      _id: (userData as any).id || userData._id,
-    };
+    const normalizedUser = normalizeUser(userData);
 
     tokenManager.setToken(accessToken);
     setToken(accessToken);
