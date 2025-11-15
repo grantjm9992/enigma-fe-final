@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import type { User, CreateUserDto, UpdateUserDto, UserRole, Session } from '../types/api';
-import { usersApi, sessionsApi } from '../services/api';
+import type { User, CreateUserDto, UpdateUserDto, UserRole, Session, Tag } from '../types/api';
+import { usersApi, sessionsApi, tagsApi } from '../services/api';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,6 +27,7 @@ export default function Users() {
 
   useEffect(() => {
     loadUsers();
+    loadTags();
   }, [filterRole]);
 
   useEffect(() => {
@@ -44,6 +46,15 @@ export default function Users() {
       setError(err.response?.data?.message || 'Failed to load users');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTags = async () => {
+    try {
+      const response = await tagsApi.getAll();
+      setTags(response.data);
+    } catch (err: any) {
+      console.error('Failed to load tags:', err);
     }
   };
 
@@ -131,14 +142,24 @@ export default function Users() {
           // Count by exercise name
           exerciseFrequency[exercise.name] = (exerciseFrequency[exercise.name] || 0) + 1;
 
-          // Count by category
-          if (exercise.category) {
-            categoryFrequency[exercise.category] = (categoryFrequency[exercise.category] || 0) + 1;
+          // Count by category - handle both string and object types
+          let categoryName = '';
+          if (typeof exercise.categoryId === 'object' && exercise.categoryId?.name) {
+            categoryName = exercise.categoryId.name;
+          } else if (exercise.category) {
+            categoryName = exercise.category;
           }
 
-          // Count by tags
-          exercise.tags?.forEach(tag => {
-            tagFrequency[tag] = (tagFrequency[tag] || 0) + 1;
+          if (categoryName) {
+            categoryFrequency[categoryName] = (categoryFrequency[categoryName] || 0) + 1;
+          }
+
+          // Count by tags - map tag IDs to tag names
+          exercise.tagIds?.forEach(tagId => {
+            const tag = tags.find(t => t._id === tagId);
+            if (tag) {
+              tagFrequency[tag.name] = (tagFrequency[tag.name] || 0) + 1;
+            }
           });
         });
       });
