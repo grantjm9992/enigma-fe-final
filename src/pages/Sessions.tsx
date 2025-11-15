@@ -29,7 +29,7 @@ export default function Sessions() {
     date: '',
     duration: 3600, // 60 minutes in seconds
     instructorId: '',
-    participantIds: [],
+    attendeeIds: [],
     routines: [],
     location: '',
     maxParticipants: 0,
@@ -109,7 +109,7 @@ export default function Sessions() {
       date: '',
       duration: 3600, // 60 minutes in seconds
       instructorId: trainers[0]?._id || '',
-      participantIds: [],
+      attendeeIds: [],
       routines: [],
       location: '',
       maxParticipants: 0,
@@ -137,7 +137,7 @@ export default function Sessions() {
       date: convertToDatetimeLocal(session.date),
       duration: session.duration || 3600, // 60 minutes in seconds
       instructorId: session.instructorId,
-      participantIds: session.participantIds || [],
+      attendeeIds: session.attendeeIds || [],
       routines: session.routines || [],
       location: session.location || '',
       maxParticipants: session.maxParticipants || 0,
@@ -174,18 +174,18 @@ export default function Sessions() {
 
   const addStudent = (studentId: string) => {
     // Check if student is already added
-    const isAlreadyAdded = formData.participantIds?.includes(studentId);
+    const isAlreadyAdded = formData.attendeeIds?.includes(studentId);
     if (!isAlreadyAdded) {
       setFormData({
         ...formData,
-        participantIds: [...(formData.participantIds || []), studentId],
+        attendeeIds: [...(formData.attendeeIds || []), studentId],
       });
     }
   };
 
   const removeStudent = (studentId: string) => {
-    const updated = formData.participantIds?.filter(id => id !== studentId) || [];
-    setFormData({ ...formData, participantIds: updated });
+    const updated = formData.attendeeIds?.filter(id => id !== studentId) || [];
+    setFormData({ ...formData, attendeeIds: updated });
   };
 
   const handleDragStart = (index: number) => {
@@ -771,7 +771,7 @@ export default function Sessions() {
                       <span className="text-lg mr-2">👥</span>
                       <span className="font-medium mr-2">Participants:</span>
                       <span className="text-slate-400">
-                        {session.participantIds?.length || 0}
+                        {session.attendeeIds?.length || 0}
                         {session.maxParticipants ? ` / ${session.maxParticipants}` : ''}
                       </span>
                     </div>
@@ -958,7 +958,7 @@ export default function Sessions() {
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <label className="block text-sm font-medium text-slate-300">
-                      Participants ({formData.participantIds?.length || 0}
+                      Participants ({formData.attendeeIds?.length || 0}
                       {formData.maxParticipants ? ` / ${formData.maxParticipants}` : ''})
                     </label>
                     <button
@@ -970,9 +970,9 @@ export default function Sessions() {
                     </button>
                   </div>
 
-                  {formData.participantIds && formData.participantIds.length > 0 ? (
+                  {formData.attendeeIds && formData.attendeeIds.length > 0 ? (
                     <div className="grid grid-cols-1 gap-2">
-                      {formData.participantIds.map((studentId) => {
+                      {formData.attendeeIds.map((studentId) => {
                         const student = students.find(s => s._id === studentId);
                         if (!student) return null;
                         return (
@@ -1257,7 +1257,7 @@ export default function Sessions() {
                 </div>
               ) : (
                 filteredStudents.map((student) => {
-                  const isAdded = formData.participantIds?.includes(student._id);
+                  const isAdded = formData.attendeeIds?.includes(student._id);
                   return (
                     <button
                       key={student._id}
@@ -1302,7 +1302,7 @@ export default function Sessions() {
 
             <div className="mt-4 pt-4 border-t border-slate-700 flex justify-between items-center">
               <p className="text-sm text-slate-400">
-                {formData.participantIds?.length || 0} student(s) selected
+                {formData.attendeeIds?.length || 0} student(s) selected
               </p>
               <button
                 type="button"

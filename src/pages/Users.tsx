@@ -51,7 +51,7 @@ export default function Users() {
     try {
       const response = await sessionsApi.getAll();
       const userSessions = response.data.filter(session =>
-        session.participantIds?.includes(userId)
+        session.attendeeIds?.includes(userId)
       );
       setStudentSessions(userSessions);
     } catch (err: any) {
