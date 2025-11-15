@@ -19,15 +19,22 @@ export default function Layout() {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const navLinks = [
-    { path: '/', label: 'Dashboard' },
-    { path: '/users', label: 'Users' },
-    { path: '/exercises', label: 'Exercises' },
-    { path: '/categories', label: 'Categories' },
-    { path: '/tags', label: 'Tags' },
-    { path: '/routines', label: 'Routines' },
-    { path: '/sessions', label: 'Sessions' },
-  ];
+  // Role-based navigation
+  const isAdminOrTrainer = user.role === 'admin' || user.role === 'trainer';
+
+  const navLinks = isAdminOrTrainer
+    ? [
+        { path: '/', label: 'Dashboard' },
+        { path: '/users', label: 'Users' },
+        { path: '/exercises', label: 'Exercises' },
+        { path: '/categories', label: 'Categories' },
+        { path: '/tags', label: 'Tags' },
+        { path: '/routines', label: 'Routines' },
+        { path: '/sessions', label: 'Sessions' },
+      ]
+    : [
+        { path: '/sessions', label: 'Sessions' },
+      ];
 
   const handleMobileNavClick = () => {
     setMobileMenuOpen(false);

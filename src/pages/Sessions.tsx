@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import type { Session, CreateSessionDto, Routine, User } from '../types/api';
 import { sessionsApi, routinesApi, usersApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Sessions() {
+  const { user } = useAuth();
+  const isAdminOrTrainer = user?.role === 'admin' || user?.role === 'trainer';
+
   const [sessions, setSessions] = useState<Session[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [trainers, setTrainers] = useState<User[]>([]);
@@ -13,12 +17,14 @@ export default function Sessions() {
   const [isRoutinePickerOpen, setIsRoutinePickerOpen] = useState(false);
   const [isStudentPickerOpen, setIsStudentPickerOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [viewingSession, setViewingSession] = useState<Session | null>(null);
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  // Regular users always see calendar view
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>(isAdminOrTrainer ? 'list' : 'calendar');
   const [calendarViewType, setCalendarViewType] = useState<'day' | '3day' | '7day' | 'month'>('month');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -101,6 +107,27 @@ export default function Sessions() {
     }
   };
 
+  const handleSignup = async (sessionId: string) => {
+    try {
+      await sessionsApi.signup(sessionId);
+      loadSessions();
+      setError('');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to sign up for session');
+    }
+  };
+
+  const handleRemove = async (sessionId: string) => {
+    if (!confirm('Are you sure you want to leave this session?')) return;
+    try {
+      await sessionsApi.remove(sessionId);
+      loadSessions();
+      setError('');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to leave session');
+    }
+  };
+
   const openCreateModal = () => {
     setEditingSession(null);
     setFormData({
@@ -151,6 +178,18 @@ export default function Sessions() {
     setEditingSession(null);
     setSearchTerm('');
     setStudentSearchTerm('');
+  };
+
+  const handleSessionClick = (session: Session) => {
+    if (isAdminOrTrainer) {
+      openEditModal(session);
+    } else {
+      setViewingSession(session);
+    }
+  };
+
+  const closeViewSession = () => {
+    setViewingSession(null);
   };
 
   const addRoutine = (routine: Routine) => {
@@ -364,17 +403,19 @@ export default function Sessions() {
         <div className="sm:flex-auto">
           <h1 className="text-3xl font-bold text-white">Training Sessions</h1>
           <p className="mt-2 text-slate-400">
-            Schedule and manage training sessions with routines
+            {isAdminOrTrainer ? 'Schedule and manage training sessions with routines' : 'View and sign up for training sessions'}
           </p>
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <button
-            onClick={openCreateModal}
-            className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:from-indigo-700 hover:to-purple-700 transition-all"
-          >
-            Schedule Session
-          </button>
-        </div>
+        {isAdminOrTrainer && (
+          <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+            <button
+              onClick={openCreateModal}
+              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:from-indigo-700 hover:to-purple-700 transition-all"
+            >
+              Schedule Session
+            </button>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -383,39 +424,41 @@ export default function Sessions() {
         </div>
       )}
 
-      {/* View Tabs */}
-      <div className="mb-6 flex space-x-2 border-b border-slate-700">
-        <button
-          onClick={() => setViewMode('list')}
-          className={`px-6 py-3 font-medium transition-all ${
-            viewMode === 'list'
-              ? 'text-white border-b-2 border-indigo-500'
-              : 'text-slate-400 hover:text-slate-300'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            List View
-          </div>
-        </button>
-        <button
-          onClick={() => setViewMode('calendar')}
-          className={`px-6 py-3 font-medium transition-all ${
-            viewMode === 'calendar'
-              ? 'text-white border-b-2 border-indigo-500'
-              : 'text-slate-400 hover:text-slate-300'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            Calendar View
-          </div>
-        </button>
-      </div>
+      {/* View Tabs - Only show for admins/trainers */}
+      {isAdminOrTrainer && (
+        <div className="mb-6 flex space-x-2 border-b border-slate-700">
+          <button
+            onClick={() => setViewMode('list')}
+            className={`px-6 py-3 font-medium transition-all ${
+              viewMode === 'list'
+                ? 'text-white border-b-2 border-indigo-500'
+                : 'text-slate-400 hover:text-slate-300'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              List View
+            </div>
+          </button>
+          <button
+            onClick={() => setViewMode('calendar')}
+            className={`px-6 py-3 font-medium transition-all ${
+              viewMode === 'calendar'
+                ? 'text-white border-b-2 border-indigo-500'
+                : 'text-slate-400 hover:text-slate-300'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Calendar View
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* Date Filters - Only show in list view */}
       {viewMode === 'list' && (
@@ -584,7 +627,7 @@ export default function Sessions() {
                           {daySessions.slice(0, 3).map((session) => (
                             <button
                               key={session._id}
-                              onClick={() => openEditModal(session)}
+                              onClick={() => handleSessionClick(session)}
                               className="w-full text-left px-2 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded text-xs text-indigo-300 transition-colors"
                             >
                               <div className="font-medium truncate">{formatTime(session.date)}</div>
@@ -661,7 +704,7 @@ export default function Sessions() {
                               return (
                                 <button
                                   key={session._id}
-                                  onClick={() => openEditModal(session)}
+                                  onClick={() => handleSessionClick(session)}
                                   className="absolute left-1 right-1 bg-indigo-600 hover:bg-indigo-700 border border-indigo-500 rounded px-2 py-1 text-left transition-colors overflow-hidden"
                                   style={{
                                     top: `${topPosition}%`,
@@ -1314,6 +1357,119 @@ export default function Sessions() {
               >
                 Done
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Session Modal - For regular users */}
+      {viewingSession && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 max-w-2xl w-full my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-6">
+              <h2 className="text-2xl font-bold text-white">{viewingSession.name}</h2>
+              <button
+                onClick={closeViewSession}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {viewingSession.description && (
+              <p className="text-slate-300 mb-6">{viewingSession.description}</p>
+            )}
+
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center text-slate-300">
+                <span className="text-lg mr-3">📅</span>
+                <span className="font-medium mr-2">Date:</span>
+                <span className="text-slate-400">{formatDate(viewingSession.date)}</span>
+              </div>
+
+              {viewingSession.duration && (
+                <div className="flex items-center text-slate-300">
+                  <span className="text-lg mr-3">⏱️</span>
+                  <span className="font-medium mr-2">Duration:</span>
+                  <span className="text-slate-400">{Math.round(viewingSession.duration / 60)} minutes</span>
+                </div>
+              )}
+
+              {viewingSession.location && (
+                <div className="flex items-center text-slate-300">
+                  <span className="text-lg mr-3">📍</span>
+                  <span className="font-medium mr-2">Location:</span>
+                  <span className="text-slate-400">{viewingSession.location}</span>
+                </div>
+              )}
+
+              <div className="flex items-center text-slate-300">
+                <span className="text-lg mr-3">👤</span>
+                <span className="font-medium mr-2">Instructor:</span>
+                <span className="text-slate-400">
+                  {(() => {
+                    const trainer = trainers.find((t) => t._id === viewingSession.instructorId);
+                    return trainer ? `${trainer.name} ${trainer.surname}` : 'Unknown';
+                  })()}
+                </span>
+              </div>
+
+              <div className="flex items-center text-slate-300">
+                <span className="text-lg mr-3">👥</span>
+                <span className="font-medium mr-2">Participants:</span>
+                <span className="text-slate-400">
+                  {viewingSession.attendeeIds?.length || 0}
+                  {viewingSession.maxParticipants ? ` / ${viewingSession.maxParticipants}` : ''}
+                </span>
+              </div>
+            </div>
+
+            {viewingSession.routines && viewingSession.routines.length > 0 && (
+              <div className="mb-6 p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                <h3 className="text-lg font-semibold text-white mb-3">Routines</h3>
+                <ul className="space-y-2">
+                  {viewingSession.routines.map((routine, idx) => (
+                    <li key={idx} className="flex items-center text-sm bg-slate-600/50 rounded-lg px-3 py-2">
+                      <span className="text-lg mr-2">📋</span>
+                      <div className="flex-1">
+                        <span className="text-white font-medium">{routine.name}</span>
+                        <span className="text-slate-400 ml-2">({routine.exercises?.length || 0} exercises)</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="pt-6 border-t border-slate-700">
+              {viewingSession.attendeeIds?.includes(user?._id || '') ? (
+                <button
+                  onClick={() => {
+                    handleRemove(viewingSession._id);
+                    closeViewSession();
+                  }}
+                  className="w-full px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium shadow-lg shadow-red-500/30 hover:shadow-red-500/50 transition-all"
+                >
+                  Leave Session
+                </button>
+              ) : viewingSession.maxParticipants && viewingSession.attendeeIds && viewingSession.attendeeIds.length >= viewingSession.maxParticipants ? (
+                <div className="text-center py-3 text-slate-400">
+                  <p className="font-medium">Session is Full</p>
+                  <p className="text-sm">This session has reached maximum capacity</p>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    handleSignup(viewingSession._id);
+                    closeViewSession();
+                  }}
+                  className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:from-indigo-700 hover:to-purple-700 transition-all"
+                >
+                  Sign Up for Session
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -148,6 +148,12 @@ export const sessionsApi = {
 
   delete: (id: string) =>
     api.delete(`/sessions/${id}`),
+
+  signup: (id: string) =>
+    api.post<Session>(`/sessions/${id}/signup`),
+
+  remove: (id: string) =>
+    api.post<Session>(`/sessions/${id}/remove`),
 };
 
 export default api;
