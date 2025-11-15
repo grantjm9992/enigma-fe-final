@@ -40,9 +40,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (credentials: LoginDto) => {
     const response = await authApi.login(credentials);
     const { accessToken, user: userData } = response.data;
+
+    // Map 'id' to '_id' if needed for consistency
+    const normalizedUser = {
+      ...userData,
+      _id: (userData as any).id || userData._id,
+    };
+
     tokenManager.setToken(accessToken);
     setToken(accessToken);
-    setUser(userData);
+    setUser(normalizedUser);
   };
 
   const logout = () => {
