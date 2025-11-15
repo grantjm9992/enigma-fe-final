@@ -1444,45 +1444,32 @@ export default function Sessions() {
             )}
 
             <div className="pt-6 border-t border-slate-700">
-              {(() => {
-                const isSignedUp = viewingSession.attendeeIds?.includes(user?._id || '');
-                console.log('DEBUG: User ID:', user?._id);
-                console.log('DEBUG: Attendee IDs:', viewingSession.attendeeIds);
-                console.log('DEBUG: Is signed up:', isSignedUp);
-
-                if (isSignedUp) {
-                  return (
-                    <button
-                      onClick={() => {
-                        handleRemove(viewingSession._id);
-                        closeViewSession();
-                      }}
-                      className="w-full px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium shadow-lg shadow-red-500/30 hover:shadow-red-500/50 transition-all"
-                    >
-                      Leave Session
-                    </button>
-                  );
-                } else if (viewingSession.maxParticipants && viewingSession.attendeeIds && viewingSession.attendeeIds.length >= viewingSession.maxParticipants) {
-                  return (
-                    <div className="text-center py-3 text-slate-400">
-                      <p className="font-medium">Session is Full</p>
-                      <p className="text-sm">This session has reached maximum capacity</p>
-                    </div>
-                  );
-                } else {
-                  return (
-                    <button
-                      onClick={() => {
-                        handleSignup(viewingSession._id);
-                        closeViewSession();
-                      }}
-                      className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:from-indigo-700 hover:to-purple-700 transition-all"
-                    >
-                      Sign Up for Session
-                    </button>
-                  );
-                }
-              })()}
+              {viewingSession.attendeeIds?.includes(user?._id || '') ? (
+                <button
+                  onClick={() => {
+                    handleRemove(viewingSession._id);
+                    closeViewSession();
+                  }}
+                  className="w-full px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium shadow-lg shadow-red-500/30 hover:shadow-red-500/50 transition-all"
+                >
+                  Leave Session
+                </button>
+              ) : viewingSession.maxParticipants && viewingSession.attendeeIds && viewingSession.attendeeIds.length >= viewingSession.maxParticipants ? (
+                <div className="text-center py-3 text-slate-400">
+                  <p className="font-medium">Session is Full</p>
+                  <p className="text-sm">This session has reached maximum capacity</p>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    handleSignup(viewingSession._id);
+                    closeViewSession();
+                  }}
+                  className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:from-indigo-700 hover:to-purple-700 transition-all"
+                >
+                  Sign Up for Session
+                </button>
+              )}
             </div>
           </div>
         </div>
